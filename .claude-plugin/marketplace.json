@@ -1,0 +1,25 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "mdtrace",
+  "description": "識別子でつながった Markdown 文書群をグラフとして扱う CLI mdtrace のプラグイン配布",
+  "owner": {
+    "name": "roamer7038",
+    "email": "okayado7038@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "mdtrace",
+      "displayName": "mdtrace",
+      "description": "識別子でつながった Markdown 文書群をグラフとして扱う CLI mdtrace を Claude Code から使うプラグイン。要件 → 設計 → 実装 → テストの対応を機械的に検証・可視化する。",
+      "author": {
+        "name": "roamer7038",
+        "email": "okayado7038@gmail.com",
+        "url": "https://github.com/roamer7038"
+      },
+      "source": "./",
+      "category": "documentation",
+      "homepage": "https://github.com/roamer7038/mdtrace",
+      "keywords": ["traceability", "markdown", "documentation", "requirements", "design"]
+    }
+  ]
+}
