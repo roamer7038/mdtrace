@@ -1,0 +1,51 @@
+package main
+
+import (
+	"runtime/debug"
+	"testing"
+)
+
+func TestResolveVersion(t *testing.T) {
+	t.Run("ldflags で明示されていればそれを使う", func(t *testing.T) {
+		got := resolveVersion("v0.3.0")
+		if got != "v0.3.0" {
+			t.Fatalf("got %q, want %q", got, "v0.3.0")
+		}
+	})
+
+	t.Run("未指定なら BuildInfo の Main.Version を使う", func(t *testing.T) {
+		orig := readBuildInfo
+		defer func() { readBuildInfo = orig }()
+		readBuildInfo = func() (*debug.BuildInfo, bool) {
+			return &debug.BuildInfo{Main: debug.Module{Version: "v0.2.0"}}, true
+		}
+		got := resolveVersion(devVersion)
+		if got != "v0.2.0" {
+			t.Fatalf("got %q, want %q", got, "v0.2.0")
+		}
+	})
+
+	t.Run("BuildInfo が取れなければ devVersion のまま", func(t *testing.T) {
+		orig := readBuildInfo
+		defer func() { readBuildInfo = orig }()
+		readBuildInfo = func() (*debug.BuildInfo, bool) {
+			return nil, false
+		}
+		got := resolveVersion(devVersion)
+		if got != devVersion {
+			t.Fatalf("got %q, want %q", got, devVersion)
+		}
+	})
+
+	t.Run("BuildInfo の Version が (devel) なら devVersion のまま", func(t *testing.T) {
+		orig := readBuildInfo
+		defer func() { readBuildInfo = orig }()
+		readBuildInfo = func() (*debug.BuildInfo, bool) {
+			return &debug.BuildInfo{Main: debug.Module{Version: "(devel)"}}, true
+		}
+		got := resolveVersion(devVersion)
+		if got != devVersion {
+			t.Fatalf("got %q, want %q", got, devVersion)
+		}
+	})
+}

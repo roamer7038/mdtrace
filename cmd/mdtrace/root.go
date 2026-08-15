@@ -13,9 +13,6 @@ import (
 // toolName は設定ファイルの探索に使う名前（mdtrace.yaml）。
 const toolName = "mdtrace"
 
-// version はビルド時に -ldflags で差し替える。
-var version = "0.1.0"
-
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   toolName,
@@ -30,7 +27,7 @@ func newRootCmd() *cobra.Command {
 終了コードは 0=合格 / 1=不合格 / 2=設定や引数の不備。`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Version:       version,
+		Version:       resolveVersion(version),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.Flags().Changed("output")
 			// ファイルへ書き出すときは色を付けない。成果物に制御文字が混ざる。
