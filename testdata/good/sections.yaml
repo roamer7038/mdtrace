@@ -1,0 +1,14 @@
+requirements:
+  required:
+    - "概要"
+    - "受け入れ条件"
+    - "対象外"
+design:
+  required:
+    - "アーキテクチャ"
+    - "インターフェース"
+    - "データモデル"
+implementation:
+  required:
+    - "実装内容"
+    - "テスト方針"

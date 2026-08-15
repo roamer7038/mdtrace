@@ -1,0 +1,30 @@
+architecture:
+    required:
+        - 構成
+        - 決定と根拠
+        - 影響
+    order: true
+basic-design:
+    required:
+        - 機能概要
+        - 入出力
+        - 振る舞い
+    order: true
+detailed-design:
+    required:
+        - 担当箇所
+        - 処理
+        - 留意点
+    order: true
+requirements:
+    required:
+        - 概要
+        - 受け入れ条件
+        - 対象外
+    order: true
+test-design:
+    required:
+        - 観点
+        - 検査方法
+        - 合格条件
+    order: true

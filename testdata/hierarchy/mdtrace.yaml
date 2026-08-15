@@ -1,0 +1,11 @@
+chain:
+    - requirements
+
+files:
+  - path: docs/requirements.md
+    type: requirements
+    id_pattern: "R-{seq}"
+
+rules:
+  required_sections:
+    config: sections.yaml

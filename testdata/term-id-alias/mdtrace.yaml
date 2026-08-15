@@ -1,0 +1,10 @@
+chain:
+    - requirements
+
+files:
+  - path: docs/requirements.md
+    type: requirements
+    id_pattern: "FR-{seq}"
+  - path: docs/glossary.md
+    type: glossary
+    id_pattern: "T-{seq}"

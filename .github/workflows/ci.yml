@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Format check
+        run: test -z "$(gofmt -l .)"
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: make build
+
+  # 検証が通る構成で、コマンドが実際に動くことを確かめる。
+  # mdtrace 自身の文書は Go のテストが検証する。
+  self-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: make build
+      - name: 文書を検証する
+        run: ../../bin/mdtrace verify
+        working-directory: testdata/good
+      - name: 欠落を確認する
+        # testdata/good は欠落を含むサンプルのため、失敗させない
+        run: ../../bin/mdtrace gaps || true
+        working-directory: testdata/good
+      - name: 対応表を保存する
+        run: ../../bin/mdtrace matrix --output ../../traceability.md
+        working-directory: testdata/good
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traceability
+          path: traceability.md

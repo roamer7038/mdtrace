@@ -1,0 +1,11 @@
+chain:
+    - req
+
+files:
+  - path: docs/req.md
+    type: req
+    id_pattern: "X-{seq}"
+
+rules:
+  required_sections:
+    config: sections.yaml

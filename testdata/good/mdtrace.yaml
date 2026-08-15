@@ -1,0 +1,39 @@
+chain:
+    - requirements
+    - design
+    - implementation
+
+files:
+  - path: docs/requirements.md
+    type: requirements
+    id_pattern: "R-{seq}"
+    id_start: 1
+  - path: docs/design.md
+    type: design
+    id_pattern: "FR-{seq}"
+    id_start: 1
+    depends_on:
+      - docs/requirements.md
+  - path: docs/implementation.md
+    type: implementation
+    id_pattern: "IMP-{seq}"
+    id_start: 1
+    depends_on:
+      - docs/design.md
+  - path: docs/glossary.md
+    type: glossary
+    id_pattern: "TERM-{seq}"
+
+rules:
+  ref_integrity:
+    enabled: true
+  term_consistency:
+    enabled: true
+  required_sections:
+    enabled: true
+    config: sections.yaml
+  id_uniqueness:
+    enabled: true
+    check_sequence: false
+  dep_order:
+    enabled: true

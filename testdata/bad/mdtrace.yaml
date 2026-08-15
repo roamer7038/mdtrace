@@ -1,0 +1,28 @@
+chain:
+    - requirements
+    - design
+    - implementation
+
+files:
+  - path: docs/requirements.md
+    type: requirements
+    id_pattern: "R-{seq}"
+  - path: docs/design.md
+    type: design
+    id_pattern: "FR-{seq}"
+    depends_on:
+      - docs/requirements.md
+  - path: docs/implementation.md
+    type: implementation
+    id_pattern: "IMP-{seq}"
+    depends_on:
+      - docs/design.md
+  - path: docs/glossary.md
+    type: glossary
+    id_pattern: "TERM-{seq}"
+
+rules:
+  required_sections:
+    config: sections.yaml
+  id_uniqueness:
+    check_sequence: true

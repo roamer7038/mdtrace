@@ -1,0 +1,38 @@
+# 要件から設計 3 層を経てテスト設計まで辿り、検査されていない要件を洗い出す。
+chain: [requirements, architecture, basic-design, detailed-design, test-design]
+files:
+  - path: "{docs}/requirements.md"
+    type: requirements
+    id_pattern: "REQ-{seq}"
+  - path: "{docs}/architecture.md"
+    type: architecture
+    id_pattern: "ARC-{seq}"
+    depends_on: ["{docs}/requirements.md"]
+  - path: "{docs}/basic-design.md"
+    type: basic-design
+    id_pattern: "BD-{seq}"
+    depends_on: ["{docs}/architecture.md"]
+  - path: "{docs}/detailed-design.md"
+    type: detailed-design
+    id_pattern: "DD-{seq}"
+    depends_on: ["{docs}/basic-design.md"]
+  - path: "{docs}/test-design.md"
+    type: test-design
+    id_pattern: "TD-{seq}"
+    depends_on: ["{docs}/detailed-design.md"]
+  # リファレンスは chain に載せない。利用者向けの手引きは対応表の段ではないので、
+  # 列にも網羅率の分母にもしない。ただし設計の識別子を引くので依存は宣言する。
+  - path: "{docs}/reference.md"
+    type: reference
+    id_pattern: "GUIDE-{seq}"
+    depends_on:
+      - "{docs}/requirements.md"
+      - "{docs}/architecture.md"
+      - "{docs}/basic-design.md"
+      - "{docs}/detailed-design.md"
+      - "{docs}/test-design.md"
+  # 用語集も chain に載せない。どこからでも引かれる補助文書なので、
+  # 対応表の列にせず、依存順序の検査からも外す。
+  - path: "{docs}/glossary.md"
+    type: glossary
+    id_pattern: "TERM-{seq}"

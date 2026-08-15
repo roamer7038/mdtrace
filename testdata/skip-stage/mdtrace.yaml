@@ -1,0 +1,21 @@
+chain:
+  - req
+  - des
+  - imp
+
+files:
+  - path: docs/req.md
+    type: req
+    id_pattern: "R-{seq}"
+  - path: docs/des.md
+    type: des
+    id_pattern: "D-{seq}"
+  - path: docs/imp.md
+    type: imp
+    id_pattern: "I-{seq}"
+  - path: docs/guide.md
+    type: guide
+    id_pattern: "G-{seq}"
+  - path: docs/glossary.md
+    type: glossary
+    id_pattern: "T-{seq}"

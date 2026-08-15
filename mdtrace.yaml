@@ -1,0 +1,50 @@
+preset: waterfall
+chain:
+    - requirements
+    - architecture
+    - basic-design
+    - detailed-design
+    - test-design
+files:
+    - path: docs/requirements.md
+      type: requirements
+      id_pattern: REQ-{seq}
+      id_start: 1
+    - path: docs/architecture.md
+      type: architecture
+      id_pattern: ARC-{seq}
+      id_start: 1
+      depends_on:
+        - docs/requirements.md
+    - path: docs/basic-design.md
+      type: basic-design
+      id_pattern: BD-{seq}
+      id_start: 1
+      depends_on:
+        - docs/architecture.md
+    - path: docs/detailed-design.md
+      type: detailed-design
+      id_pattern: DD-{seq}
+      id_start: 1
+      depends_on:
+        - docs/basic-design.md
+    - path: docs/test-design.md
+      type: test-design
+      id_pattern: TD-{seq}
+      id_start: 1
+      depends_on:
+        - docs/detailed-design.md
+    - path: docs/reference.md
+      type: reference
+      id_pattern: GUIDE-{seq}
+      id_start: 1
+      depends_on:
+        - docs/requirements.md
+        - docs/architecture.md
+        - docs/basic-design.md
+        - docs/detailed-design.md
+        - docs/test-design.md
+    - path: docs/glossary.md
+      type: glossary
+      id_pattern: TERM-{seq}
+      id_start: 1
