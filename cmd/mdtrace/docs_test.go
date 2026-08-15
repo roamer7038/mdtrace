@@ -64,6 +64,7 @@ func docFiles(t *testing.T) []string {
 		"../../docs/test-design.md",
 		"../../docs/reference.md",
 		"../../docs/glossary.md",
+		"../../skills/mdtrace/SKILL.md",
 	}
 	for _, want := range guard {
 		if !slices.Contains(out, want) {

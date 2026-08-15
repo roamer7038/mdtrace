@@ -1,0 +1,13 @@
+{
+  "name": "mdtrace",
+  "description": "識別子でつながった Markdown 文書群をグラフとして扱う CLI mdtrace を Claude Code から使うプラグイン。要件 → 設計 → 実装 → テストの対応を機械的に検証・可視化する。",
+  "author": {
+    "name": "roamer7038",
+    "email": "okayado7038@gmail.com",
+    "url": "https://github.com/roamer7038"
+  },
+  "homepage": "https://github.com/roamer7038/mdtrace",
+  "repository": "https://github.com/roamer7038/mdtrace",
+  "license": "MIT",
+  "keywords": ["traceability", "markdown", "documentation", "requirements", "design"]
+}
