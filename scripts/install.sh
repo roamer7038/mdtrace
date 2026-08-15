@@ -4,12 +4,10 @@
 # Linux/macOS の amd64・arm64 に対応する。Windows は go install を使うこと。
 #
 #   使い方: curl -fsSL https://raw.githubusercontent.com/roamer7038/mdtrace/main/scripts/install.sh | sh
-#
-#   環境変数 MDTRACE_INSTALL_DIR で配置先を上書きできる（既定: $HOME/.local/bin）。
 set -eu
 
 repo="roamer7038/mdtrace"
-install_dir="${MDTRACE_INSTALL_DIR:-$HOME/.local/bin}"
+install_dir="$HOME/.local/bin"
 
 os="$(uname -s)"
 arch="$(uname -m)"
