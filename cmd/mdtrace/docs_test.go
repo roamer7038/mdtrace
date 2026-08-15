@@ -272,6 +272,8 @@ func TestDocsHaveNoStaleCommandNames(t *testing.T) {
 	for _, w := range []string{"は", "が", "を", "に", "の", "で", "と", "も", "自身"} {
 		known[w] = true
 	}
+	// --version の出力の書式（"mdtrace version <値>"）として現れる。
+	known["version"] = true
 	re := regexp.MustCompile(`mdtrace ([a-z][a-z-]*)`)
 
 	for _, path := range docFiles(t) {
@@ -486,8 +488,9 @@ func directDependencies(t *testing.T) int {
 }
 
 // allFlagNames はコマンド木にあるフラグ名をすべて返す。
+// help と version は cobra が Execute 時に登録するため、木の走査では見えない。
 func allFlagNames(root *cobra.Command) map[string]bool {
-	out := map[string]bool{"help": true}
+	out := map[string]bool{"help": true, "version": true}
 	var walk func(cmd *cobra.Command)
 	walk = func(cmd *cobra.Command) {
 		cmd.Flags().VisitAll(func(f *pflag.Flag) { out[f.Name] = true })

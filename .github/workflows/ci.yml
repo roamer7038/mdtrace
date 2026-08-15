@@ -1,9 +1,13 @@
+# 品質の門番。push と PR のたびに検査を実行する。
+# release.yml が workflow_call で同じ検査を再実行してから公開するため、
+# 検査の内容はこのファイルだけが持つ（写しを作らない）。
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 jobs:
   test:
@@ -12,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version-file: go.mod
       - name: Format check
         run: test -z "$(gofmt -l .)"
       - name: Vet
@@ -34,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version-file: go.mod
       - run: make build
       - name: 文書を検証する
         run: ../../bin/mdtrace verify

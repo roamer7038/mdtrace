@@ -46,6 +46,10 @@ make build   # bin/mdtrace
 bash scripts/regenerate-docs.sh   # 自身の文書を CLI で組み立て直す
 ```
 
+リリースはタグの push だけで行う（`git tag vX.Y.Z && git push origin vX.Y.Z`）。
+release.yml が ci.yml の検査を再実行してから GoReleaser で公開する。
+配布の決定と根拠は `docs/architecture.md` の「配布の経路とバージョン表示の一貫性」にある。
+
 ## 正しさの基準
 
 文書と実装が食い違ったとき、**どちらが正しいか**をここで決めておく。

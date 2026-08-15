@@ -1,3 +1,6 @@
+# タグ起点の公開。v* タグの push で CI の検査を再実行し、
+# 通ったときだけ GoReleaser が GitHub Releases へバイナリを公開する。
+# 検査の内容は ci.yml が正典で、ここには公開の手順だけを書く。
 name: Release
 
 on:
@@ -5,12 +8,17 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-
 jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   goreleaser:
+    needs: verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
