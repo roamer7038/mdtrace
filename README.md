@@ -100,8 +100,7 @@ mdtrace 自身の文書もこの構成で書かれています（[docs/](docs/) 
 curl -fsSL https://raw.githubusercontent.com/roamer7038/mdtrace/main/scripts/install.sh | sh
 ```
 
-`~/.local/bin` に配置します（Linux/macOS の amd64・arm64 向け。
-配置先は環境変数 `MDTRACE_INSTALL_DIR` で変更できます）。
+`~/.local/bin` に配置します（Linux/macOS の amd64・arm64 向け）。
 
 Go の開発環境がある場合:
 
