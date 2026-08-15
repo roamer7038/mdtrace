@@ -4,7 +4,8 @@ project_name: mdtrace
 
 before:
   hooks:
-    - go mod tidy
+    - go mod download
+    - go mod verify
 
 builds:
   - id: mdtrace

@@ -21,6 +21,10 @@ jobs:
         run: go test ./...
       - name: Build
         run: make build
+      - name: install.shの構文を確認する
+        run: sh -n scripts/install.sh
+      - name: install.shをshellcheckで確認する
+        run: shellcheck scripts/install.sh
 
   # 検証が通る構成で、コマンドが実際に動くことを確かめる。
   # mdtrace 自身の文書は Go のテストが検証する。

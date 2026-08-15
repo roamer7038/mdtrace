@@ -19,7 +19,7 @@ func TestResolveVersion(t *testing.T) {
 		readBuildInfo = func() (*debug.BuildInfo, bool) {
 			return &debug.BuildInfo{Main: debug.Module{Version: "v0.2.0"}}, true
 		}
-		got := resolveVersion(devVersion)
+		got := resolveVersion("")
 		if got != "v0.2.0" {
 			t.Fatalf("got %q, want %q", got, "v0.2.0")
 		}
@@ -31,7 +31,7 @@ func TestResolveVersion(t *testing.T) {
 		readBuildInfo = func() (*debug.BuildInfo, bool) {
 			return nil, false
 		}
-		got := resolveVersion(devVersion)
+		got := resolveVersion("")
 		if got != devVersion {
 			t.Fatalf("got %q, want %q", got, devVersion)
 		}
@@ -43,9 +43,16 @@ func TestResolveVersion(t *testing.T) {
 		readBuildInfo = func() (*debug.BuildInfo, bool) {
 			return &debug.BuildInfo{Main: debug.Module{Version: "(devel)"}}, true
 		}
-		got := resolveVersion(devVersion)
+		got := resolveVersion("")
 		if got != devVersion {
 			t.Fatalf("got %q, want %q", got, devVersion)
+		}
+	})
+
+	t.Run("Makefileの既定値0.1.0はldflags値として尊重される", func(t *testing.T) {
+		got := resolveVersion("0.1.0")
+		if got != "0.1.0" {
+			t.Fatalf("got %q, want %q", got, "0.1.0")
 		}
 	})
 }
