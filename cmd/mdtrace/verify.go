@@ -45,7 +45,7 @@ func newVerifyCmd() *cobra.Command {
 			}
 
 			if res.HasErrors() {
-				return cli.Fail(fmt.Sprintf("%d 件のエラー", res.Summary.TotalErrors))
+				return cli.Fail(fmt.Sprintf("%d 件の誤り", res.Summary.TotalErrors))
 			}
 			return nil
 		},

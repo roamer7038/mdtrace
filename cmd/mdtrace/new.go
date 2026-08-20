@@ -23,7 +23,7 @@ func newNewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <type>",
 		Short: "文書の雛形を生成する（使える種類は mdtrace templates で確認する）",
-		Args:  cobra.ExactArgs(1),
+		Args:  exactArgs(1, "雛形の種類"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfig(cmd)
 			if err != nil {
@@ -74,7 +74,7 @@ func newTemplatesCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "templates",
 		Short: "利用できる雛形の種類を一覧する",
-		Args:  cobra.NoArgs,
+		Args:  noArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfig(cmd)
 			if err != nil {

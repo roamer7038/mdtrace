@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -65,11 +66,46 @@ func ExitCode(err error) int {
 	}
 }
 
+// ErrorLine は標準エラーへ出す 1 行を作る。
+//
+// 終了コードで分けている区別（1=不合格 / 2=設定や引数の不備）を語でも示す。
+// どちらも同じ語で始めると、道具が報告した不一致（検証の不合格・辿り切れない
+// 識別子）が、道具が動けなかったことと同じ強さで読める。
+// 前者は文書の状態についての事実であって、道具の異常ではない。
+func ErrorLine(err error) string {
+	var fe *FailError
+	if errors.As(err, &fe) {
+		return "不合格: " + err.Error()
+	}
+	return "エラー: " + err.Error()
+}
+
+// Reason は OS が返した誤りを日本語の一文にする。
+//
+// 判定は誤りの**種類**で行う。文言を照合すると、環境や版で表現が変わったときに
+// 黙って英語へ戻る。当てはまらないものは元の文をそのまま返す。
+// 訳を持たない領域（設定の構文解析器が返す位置付きの診断など）まで訳し直すと、
+// 元の文言で調べられなくなるためである。
+func Reason(err error) string {
+	var pe *fs.PathError
+	where := ""
+	if errors.As(err, &pe) {
+		where = pe.Path + " "
+	}
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return where + "が見つかりません"
+	case errors.Is(err, fs.ErrPermission):
+		return where + "を読み書きする権限がありません"
+	}
+	return err.Error()
+}
+
 // LoadConfig は --config 指定、なければツール名から設定ファイルを探して読む。
 func LoadConfig(explicit, tool string) (*config.Config, error) {
 	cfg, err := config.Discover(explicit, tool)
 	if err != nil {
-		return nil, Configf("設定の読み込みに失敗しました: %w", err)
+		return nil, Configf("設定を読めません: %s", Reason(err))
 	}
 	return cfg, nil
 }
@@ -97,7 +133,7 @@ func ExpandTargets(cfg *config.Config, args []string) ([]string, error) {
 		// 明示したパスが読めないときは黙って落とさない。模様は 0 件でも
 		// 許すが、名指しの打ち間違いは「何も起きない成功」になってはならない。
 		if statErr != nil && !config.IsGlob(arg) {
-			return nil, Configf("%s を読めません: %v", arg, statErr)
+			return nil, Configf("%s", Reason(statErr))
 		}
 		switch {
 		// 実在するものは模様として解釈しない。glob へ回すと、名前に含まれる
@@ -107,7 +143,7 @@ func ExpandTargets(cfg *config.Config, args []string) ([]string, error) {
 		case statErr == nil && st.IsDir():
 			found, err := markdownUnder(arg)
 			if err != nil {
-				return nil, Configf("%s を読めません: %v", arg, err)
+				return nil, Configf("%s", Reason(err))
 			}
 			out = append(out, found...)
 		default:

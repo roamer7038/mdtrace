@@ -33,6 +33,19 @@ func StatusGlyph(status string) string {
 	}
 }
 
+// StatusMeaning は状態の意味を人の言葉で返す。凡例の出所をここ 1 か所にする。
+// 記号の側に説明を書き写すと、状態を足したときに片方だけが取り残される。
+func StatusMeaning(status string) string {
+	switch status {
+	case StatusComplete:
+		return "すべての経路が連鎖の最終段まで届いている"
+	case StatusPartial:
+		return "一部の経路が途中で途切れている"
+	default:
+		return "下流へ辿る経路が 1 本も無い"
+	}
+}
+
 // MatrixRow は連鎖の起点 1 件分の行。
 type MatrixRow struct {
 	ID    string `json:"id"`

@@ -26,7 +26,7 @@ func newInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "構成の型から設定（mdtrace.yaml）と必須セクション定義（sections.yaml）を作る",
-		Args:  cobra.NoArgs,
+		Args:  noArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// init が作るファイルそのものが設定なので、--config は作り先の指定として扱う。
 			cfgFlag := configFlag(cmd)

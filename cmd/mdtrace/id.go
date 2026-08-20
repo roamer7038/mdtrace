@@ -22,7 +22,7 @@ func newIDCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "id <files...>",
 		Short: "見出しに識別子を付与する（既存の識別子は保持し、連番は続きから振る）",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  minArgs(1, "対象文書"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := loadConfig(cmd)
 			if err != nil {

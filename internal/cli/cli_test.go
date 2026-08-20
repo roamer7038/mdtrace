@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -196,5 +199,76 @@ func TestFormatDispatch(t *testing.T) {
 	if _, err := FormatDispatch("xml", choices...); err == nil ||
 		!strings.Contains(err.Error(), "text, json") {
 		t.Errorf("未知の形式の報告に受け付ける一覧が無い: %v", err)
+	}
+}
+
+// TestErrorLineSeparatesFailureFromError は、標準エラーの 1 行が
+// 「検証の不合格」と「道具が動けなかったこと」を語で区別することを確かめる。
+//
+// 両方を同じ語で始めると、gaps や verify が報告した不一致が道具の異常と
+// 同じ強さで読める。終了コードで分けているものは語でも分ける。
+func TestErrorLineSeparatesFailureFromError(t *testing.T) {
+	tests := []struct {
+		err  error
+		code int
+	}{
+		{Fail("2 件の欠落"), ExitFail},
+		{Configf("設定がありません"), ExitConfig},
+		{errors.New("生のエラー"), ExitConfig},
+	}
+	head := map[int]string{}
+	for _, tt := range tests {
+		line := ErrorLine(tt.err)
+		if !strings.HasSuffix(line, tt.err.Error()) {
+			t.Errorf("元の文言が失われている: %q", line)
+		}
+		word, _, ok := strings.Cut(line, ": ")
+		if !ok {
+			t.Fatalf("語と本文が区切られていない: %q", line)
+		}
+		if prev, seen := head[tt.code]; seen && prev != word {
+			t.Errorf("終了コード %d で語が揺れている: %q / %q", tt.code, prev, word)
+		}
+		head[tt.code] = word
+	}
+	if head[ExitFail] == head[ExitConfig] {
+		t.Errorf("不合格と設定の不備が同じ語で始まっている: %q", head[ExitFail])
+	}
+	// 出力は日本語で揃える。cobra 由来でない語まで英語で残さない。
+	for code, word := range head {
+		if regexp.MustCompile(`[A-Za-z]`).MatchString(word) {
+			t.Errorf("終了コード %d の語に英語が残っている: %q", code, word)
+		}
+	}
+}
+
+// TestReasonIsTypeBased は、OS が返した誤りの訳が文言ではなく
+// 種類で判定されていることを確かめる。
+//
+// 文言で判定すると、環境や版で表現が変わったときに黙って英語へ戻る。
+// 訳を持たない誤りは元の文を保つことも併せて見る。
+func TestReasonIsTypeBased(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "nope.yaml")
+	_, err := os.Open(missing)
+	if err == nil {
+		t.Fatal("存在しないファイルが開けた")
+	}
+	got := Reason(err)
+	if !strings.Contains(got, missing) || !strings.Contains(got, "見つかりません") {
+		t.Errorf("Reason = %q, 経路と日本語の理由を含むこと", got)
+	}
+	if regexp.MustCompile(`[A-Za-z]`).MatchString(strings.ReplaceAll(got, missing, "")) {
+		t.Errorf("理由に英語が残っている: %q", got)
+	}
+
+	// 包んだ誤りでも種類で辿れること。
+	if wrapped := Reason(fmt.Errorf("設定: %w", err)); !strings.Contains(wrapped, "見つかりません") {
+		t.Errorf("包んだ誤りを辿れていない: %q", wrapped)
+	}
+
+	// 訳を持たない誤りは元の文のまま返す。
+	plain := errors.New("yaml: line 1: did not find expected ',' or ']'")
+	if Reason(plain) != plain.Error() {
+		t.Errorf("訳の無い誤りを書き換えている: %q", Reason(plain))
 	}
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/roamer7038/mdtrace/internal/cli"
 	"github.com/roamer7038/mdtrace/internal/config"
 	"github.com/roamer7038/mdtrace/internal/rules"
 	tmpl "github.com/roamer7038/mdtrace/templates"
@@ -827,6 +828,28 @@ func TestImpactExampleMatchesOutput(t *testing.T) {
 	}
 }
 
+// TestGapsExampleMatchesOutput は、リファレンスの gaps の出力例が
+// testdata/good に対する実際の出力と一致することを確かめる。
+//
+// 例は「どこで途切れたか」の読み方そのものなので、出力の形を変えたときに
+// 例だけが取り残されると、案内が実物と食い違う。
+func TestGapsExampleMatchesOutput(t *testing.T) {
+	doc := readDoc(t, "../../docs/reference.md")
+	re := regexp.MustCompile("(?s)mdtrace gaps\n```\n\n```\n(.*?)\n```")
+	m := re.FindStringSubmatch(doc)
+	if m == nil {
+		t.Fatal("リファレンスに gaps の出力例が見つからない")
+	}
+	t.Chdir("../../testdata/good")
+	out, code := execute(t, "gaps")
+	if code != cli.ExitFail {
+		t.Fatalf("終了コード = %d, want %d\n%s", code, cli.ExitFail, out)
+	}
+	if got, want := strings.TrimSpace(out), strings.TrimSpace(m[1]); got != want {
+		t.Errorf("出力例が実際の出力とずれている\n--- 例\n%s\n--- 実際\n%s", want, got)
+	}
+}
+
 // TestSectionExamplesCoverExampleChains は、同じ文書に載せた設定の例と
 // 必須セクション定義の例が、組として成立していることを確かめる。
 //
@@ -864,5 +887,110 @@ func TestSectionExamplesCoverExampleChains(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// englishChrome は cobra が既定で差し込む英語。--help の説明文だけ日本語で、
+// 枠組みが英語のままだと、利用者から見た出力が 2 か国語に割れる。
+var englishChrome = []string{
+	"Usage:",
+	"Aliases:",
+	"Examples:",
+	"Available Commands:",
+	"Additional Commands:",
+	"Additional help topics:",
+	"Flags:", // "Global Flags:" もこれで捕まる
+	"[flags]",
+	"[command]",
+	"help for ",
+	"version for ",
+	"Help about any command",
+	"Generate the autocompletion script",
+	"(default ", // pflag が付ける既定値の注記
+	`Use "`,
+}
+
+// TestHelpIsJapanese は、すべてのコマンドのヘルプに cobra 既定の英語が
+// 残っていないことを確かめる。
+//
+// 対象は一覧を手で持たずにコマンド木から引く。コマンドを足したときに
+// 検査から漏れないようにするため。
+func TestHelpIsJapanese(t *testing.T) {
+	t.Chdir(repoDir)
+	targets := [][]string{{"--help"}}
+	for _, name := range leafCommands(newRootCmd()) {
+		targets = append(targets, append(strings.Fields(name), "--help"))
+	}
+	if len(targets) < 13 { // 根 + 12 サブコマンド
+		t.Fatalf("検査対象が少なすぎる: %v", targets)
+	}
+	for _, args := range targets {
+		out, code := execute(t, args...)
+		if code != cli.ExitOK {
+			t.Fatalf("%v: 終了コード = %d\n%s", args, code, out)
+		}
+		for _, bad := range englishChrome {
+			if strings.Contains(out, bad) {
+				t.Errorf("%v のヘルプに %q が残っている:\n%s", args, bad, out)
+			}
+		}
+	}
+}
+
+// TestArgErrorsAreJapanese は、引数とオプションの解析で出る誤りが
+// 日本語で出ることを確かめる。
+//
+// 文言は cobra と pflag が組み立てるので、訳は文言の照合で当てている。
+// ライブラリが表現を変えたら、黙って英語へ戻るのではなくここが落ちる。
+// 経路は main と同じ（実行で得た誤りを translateArgError に通す）。
+func TestArgErrorsAreJapanese(t *testing.T) {
+	t.Chdir(repoDir)
+	tests := []struct {
+		args []string
+		want string
+	}{
+		{[]string{"nosuch"}, "未知のコマンド: nosuch"},
+		{[]string{"gaps", "--nope"}, "未知のオプション: --nope"},
+		{[]string{"gaps", "-Z"}, "未知の短縮オプション: -Z"},
+		{[]string{"gaps", "--format"}, "オプション --format に値が必要です"},
+		{[]string{"gaps", "-o"}, "オプション -o に値が必要です"},
+		{[]string{"impact", "REQ-1", "--depth", "abc"}, `オプション --depth の値 "abc" が不正です: 数として読めません`},
+		{[]string{"impact", "REQ-1", "--depth", "99999999999999999999"}, "扱える範囲を超えています"},
+		{[]string{"show"}, "識別子を 1 個以上指定してください"},
+		{[]string{"search"}, "探す語を 1 個以上指定してください"},
+		{[]string{"id"}, "対象文書を 1 個以上指定してください"},
+		{[]string{"new"}, "雛形の種類を 1 個指定してください"},
+		{[]string{"init", "extra"}, "引数は取りません"},
+		{[]string{"templates", "extra"}, "引数は取りません"},
+		{[]string{"verify", "nope.md"}, "nope.md が見つかりません"},
+	}
+	for _, tt := range tests {
+		_, err, code := executeErr(t, tt.args...)
+		if code != cli.ExitConfig {
+			t.Errorf("%v: 終了コード = %d, want %d", tt.args, code, cli.ExitConfig)
+			continue
+		}
+		got := cli.ErrorLine(translateArgError(err))
+		if !strings.Contains(got, tt.want) {
+			t.Errorf("%v: %q に %q が無い", tt.args, got, tt.want)
+		}
+	}
+}
+
+// TestCompletionIsNotAdvertised は、英語のままの completion が
+// コマンド一覧に出ないことを確かめる。機能自体は残す。
+func TestCompletionIsNotAdvertised(t *testing.T) {
+	t.Chdir(repoDir)
+	out, code := execute(t, "--help")
+	if code != cli.ExitOK {
+		t.Fatalf("終了コード = %d\n%s", code, out)
+	}
+	if strings.Contains(out, "completion") {
+		t.Errorf("completion が一覧に出ている:\n%s", out)
+	}
+	// 隠すだけで、呼べば動くこと。
+	if out, code := execute(t, "completion", "bash"); code != cli.ExitOK ||
+		!strings.Contains(out, "mdtrace") {
+		t.Errorf("completion が動かない: code=%d\n%s", code, out[:min(len(out), 200)])
 	}
 }

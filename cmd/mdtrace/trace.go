@@ -88,7 +88,7 @@ func newImpactCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "impact <ID> [files...]",
 		Short: "指定した識別子を変更した場合の影響範囲を分析する",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  minArgs(1, "識別子"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRendered(cmd, args[1:], output, format, func(t *trace.Trace) (renderer, error) {
 				return t.Impact(args[0], depth)
@@ -110,6 +110,16 @@ func newGapsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gaps [files...]",
 		Short: "連鎖の最終段まで辿り切れない識別子を列挙する",
+		Long: `連鎖の最終段まで辿り切れない識別子を列挙する。
+
+` + trace.StatusLegend() + `
+
+途切れた枝は「起点 → … → 行き止まり」の形で名指しする。
+段ごとの到達済み識別子だけでは、到達した枝と途切れた枝が同じ段に
+混ざるため、どこで切れたかが読めない。
+
+1 件でもあれば終了コード 1 を返す。これは連鎖の終点まで届いていない
+という事実の報告であって、書き漏れの判定ではない。`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var rep *trace.GapsReport
 			err := runRendered(cmd, args, out, format, func(t *trace.Trace) (renderer, error) {
@@ -188,7 +198,7 @@ func newShowCmd() *cobra.Command {
 		Short: "識別子が指すセクションの本文を取り出す",
 		Long: `指定した識別子のセクションだけを出力する。
 文書全体を読まずに、必要な節だけを取り出すために使う。`,
-		Args: cobra.MinimumNArgs(1),
+		Args: minArgs(1, "識別子"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			t, err := buildTrace(cmd, args[1:])
 			if err != nil {

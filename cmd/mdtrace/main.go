@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if err := newRootCmd().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
+		fmt.Fprintln(os.Stderr, cli.ErrorLine(translateArgError(err)))
 		os.Exit(cli.ExitCode(err))
 	}
 }

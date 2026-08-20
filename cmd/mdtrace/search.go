@@ -21,7 +21,7 @@ func newSearchCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "search <pattern> [files...]",
 		Short: "本文と見出しから語を探し、一致した節を返す",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  minArgs(1, "探す語"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Pattern = args[0]
 			// 一致が無いのは不合格ではないので、終了コードは 0 のままにする。

@@ -1176,3 +1176,83 @@ func TestBuildRequiresResolvedPaths(t *testing.T) {
 		t.Error("paths が空スライスでも合格している")
 	}
 }
+
+// TestGapsTextNamesBrokenBranch は、text 出力が「どこで途切れたか」を
+// 名指しすることを確かめる。
+//
+// 段ごとの到達済み識別子を並べるだけだと、最終段の列が埋まって見えるのに
+// ⚠️ が付く。到達している枝と途切れた枝が同じ列に混ざるためで、
+// 警告の理由は経路を見るまで分からない。
+func TestGapsTextNamesBrokenBranch(t *testing.T) {
+	tr := buildTemp(t, map[string]string{
+		"mdtrace.yaml": "chain: [requirements, design, implementation]\nfiles:\n" +
+			"  - path: docs/requirements.md\n    type: requirements\n    id_pattern: \"R-{seq}\"\n" +
+			"  - path: docs/design.md\n    type: design\n    id_pattern: \"FR-{seq}\"\n" +
+			"  - path: docs/implementation.md\n    type: implementation\n    id_pattern: \"IMP-{seq}\"\n",
+		"docs/requirements.md": "# 要件\n\n## R-1: 横断検索\n\nFR-1, FR-2, FR-3 で実現する。\n",
+		"docs/design.md": "# 設計\n\n## FR-1: 検索器\n\nR-1。IMP-1, IMP-2 で実装する。\n\n" +
+			"## FR-2: 索引\n\nR-1。IMP-3 で実装する。\n\n## FR-3: 設定配管\n\nR-1。\n",
+		"docs/implementation.md": "# 実装\n\n## IMP-1: a\n\nFR-1。\n\n## IMP-2: b\n\nFR-1。\n\n## IMP-3: c\n\nFR-2。\n",
+	})
+
+	rep, err := tr.Gaps("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.Items) != 1 || rep.Items[0].Status != StatusPartial {
+		t.Fatalf("欠落 = %+v, want R-1 が ⚠️ 1 件", rep.Items)
+	}
+
+	text := rep.text()
+	// 行き止まりは FR-3 だけ。到達している FR-1 / FR-2 を名指ししてはならない。
+	if !strings.Contains(text, "R-1 → FR-3") {
+		t.Errorf("途切れた枝 R-1 → FR-3 が出ていない:\n%s", text)
+	}
+	if !strings.Contains(text, "implementation") {
+		t.Errorf("届かなかった段の名前が出ていない:\n%s", text)
+	}
+	for _, reached := range []string{"→ FR-1", "→ FR-2"} {
+		if strings.Contains(text, reached) {
+			t.Errorf("到達している枝 %q を途切れとして出している:\n%s", reached, text)
+		}
+	}
+}
+
+// TestGapsTextNamesMissingRoot は、下流が 1 本も無い起点でも
+// どの段へ届かなかったかを名指しすることを確かめる。
+func TestGapsTextNamesMissingRoot(t *testing.T) {
+	tr := build(t, "good")
+	rep, err := tr.Gaps("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := rep.text()
+	if !strings.Contains(text, "R-3（design") {
+		t.Errorf("R-3 が届かなかった段を名指ししていない:\n%s", text)
+	}
+	// R-1 は FR-2 で行き止まり。FR-1 は IMP-1 まで届いている。
+	if !strings.Contains(text, "R-1 → FR-2") {
+		t.Errorf("途切れた枝 R-1 → FR-2 が出ていない:\n%s", text)
+	}
+}
+
+// TestGapsTextHasLegend は、記号の意味が出力だけで読めることを確かめる。
+// 凡例は状態の定数から作る。手で書くと表示と意味がずれる。
+func TestGapsTextHasLegend(t *testing.T) {
+	tr := build(t, "good")
+	rep, err := tr.Gaps("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := rep.text()
+	for _, status := range []string{StatusPartial, StatusMissing} {
+		if !strings.Contains(text, StatusGlyph(status)+" "+StatusMeaning(status)) {
+			t.Errorf("%s の凡例が無い:\n%s", status, text)
+		}
+	}
+	// 欠落が無いときに凡例だけ出しても読む理由が無い。
+	clean := &GapsReport{Type: "requirements", Chain: []string{"requirements", "design"}}
+	if strings.Contains(clean.text(), StatusMeaning(StatusMissing)) {
+		t.Errorf("欠落が無いのに凡例を出している:\n%s", clean.text())
+	}
+}

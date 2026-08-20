@@ -58,6 +58,8 @@ func (r *GapsReport) text() string {
 	fmt.Fprintf(&b, "%s\n\n", color.New(color.Bold).Sprint("欠落（"+r.Type+"）"))
 	if len(r.Items) == 0 {
 		fmt.Fprintf(&b, "%s\n", color.GreenString("欠落はありません"))
+	} else {
+		fmt.Fprintf(&b, "%s\n\n", color.HiBlackString(StatusLegend()))
 	}
 	// 段のラベルは連鎖から取る。特定の進め方の語彙を出力に埋め込まない。
 	stages := r.Chain[1:]
@@ -66,8 +68,55 @@ func (r *GapsReport) text() string {
 		for i, stage := range stages {
 			fmt.Fprintf(&b, "   - %s: %s\n", stage, joinOrDash(stageIDs(item.Paths, i)))
 		}
+		for _, branch := range r.brokenBranches(item) {
+			fmt.Fprintf(&b, "   途切れ: %s\n", branch)
+		}
 	}
 	fmt.Fprintf(&b, "\n網羅率: %d%% (%d/%d)\n",
 		r.Summary.RatePct, r.Summary.Complete, r.Summary.Total)
 	return b.String()
+}
+
+// StatusLegend は欠落として報告されうる状態の凡例を作る。
+// 状態を足したらここに現れるよう、記号と意味は状態の定義から引く。
+// 出力とヘルプの両方が使うので、写しを持たせない。
+func StatusLegend() string {
+	parts := make([]string, 0, 2)
+	for _, s := range []string{StatusPartial, StatusMissing} {
+		parts = append(parts, StatusGlyph(s)+" "+StatusMeaning(s))
+	}
+	return "凡例: " + strings.Join(parts, " / ")
+}
+
+// brokenBranches は最終段まで届かなかった枝を「起点 → … → 行き止まり」の形で返す。
+//
+// 段ごとの到達済み識別子だけでは、どの枝が途切れたのかが読めない。
+// 到達した枝と途切れた枝が同じ段の列に混ざるため、最終段の列が埋まって
+// 見えるのに警告が付く、という読み方の分からない出力になる。
+func (r *GapsReport) brokenBranches(item MatrixRow) []string {
+	full := len(r.Chain) - 1 // 最終段まで届いた経路の長さ
+	if full <= 0 {
+		return nil
+	}
+	// 起点から 1 歩も出ていない場合、行き止まりは起点そのもの。
+	if len(item.Paths) == 0 {
+		return []string{fmt.Sprintf("%s（%s が無い）", item.ID, r.Chain[1])}
+	}
+	var out []string
+	seen := map[string]bool{}
+	for _, p := range item.Paths {
+		if len(p) == 0 || len(p) >= full {
+			continue
+		}
+		// 経路の i 番目は連鎖の i+1 段目。長さ n で終わった経路は
+		// n 段目まで届いており、欠けているのは n+1 段目。
+		line := fmt.Sprintf("%s → %s（%s が無い）",
+			item.ID, strings.Join(p, " → "), r.Chain[len(p)+1])
+		if seen[line] {
+			continue
+		}
+		seen[line] = true
+		out = append(out, line)
+	}
+	return out
 }
